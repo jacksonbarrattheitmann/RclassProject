@@ -1,0 +1,95 @@
+---
+title: "bird_quant_analysis"
+author: "Jackson Barratt Heitmann"
+date: "4/4/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+So this first section I'm taking my raw data, and manipulating it into a community
+matrix that I can perform some statistics on afterward. 
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(vegan)
+
+dat <- read.csv("~/raw_bird_data.csv")
+
+# assumming each species only recorded once per point count then
+# species richness (sr) is just number of rows which function n() computes
+dat_sr <- dat %>%
+    group_by(date, site, site_type, block, wetland_id) %>%
+    summarise(sr = n())
+
+# need to make a community matrix with speices as columns, and point count sites
+# as rows
+
+id <- with(dat, paste(wetland_id, date))
+comm <- with(dat, tapply(total, list(id, species), function(x) sum(x)))
+comm <- ifelse(is.na(comm), 0, comm)
+
+# creating "comm" as a data frame to perform statistics on (i.e. Shannon-Weiner Bio
+# Index)
+comm_2 <- as.data.frame(comm)
+comm_2
+shan_comm <- diversity(comm, index = "shannon")
+shan_comm
+
+```
+
+Now that I created a community matrix, and actually found the Shannon-Weiner
+Biodiversity Index for each wetland, it was easier to manually plug them into a different
+data sheet that contained all of my wetland assessment vegetation data. 
+So I read that file in, and create some models, test for normal distribution. 
+
+```{r}
+
+# once I compute shannon-weiner index, It is easiest to manually plug those numbers
+# in as a column in my wetland attribute Google Sheets table
+
+# all my wetland attribute data with the Shanon-Weiner Bio Index listed as "shan_sr"
+wet_attribute_only <- read.csv("~/raw_data - just_wet_attribute.csv")
+
+# checking for a normal distribution, it looks good
+shapiro.test(wet_attribute_only$shan_sr)
+
+# the actual ANOVA table with all 3 vegetation variables 
+summary(aov(shan_sr ~ canopy_cover + herb_layer + midstory_cover, data = wet_attribute_only))
+
+# none of these are statistically signifcant, but I've got 3 plots to visulaize the data, it's apparent that I don't have great sample sizes at lower canopy class and midstory levels 
+
+# boxplot shan div ~ canopy cover
+ggplot(data = wet_attribute_only, 
+       mapping = aes(x = canopy_cover, y = shan_sr, colour = canopy_cover)) + 
+  geom_point() + geom_boxplot() + theme_bw() + 
+  xlab("Canopy Cover (%), broken into 4 categories") +
+  ylab("Shannon-Weiner Index of Biodiversity at wetland sites")
+
+
+# boxplot shan div ~ midstory cover
+ ggplot(data = wet_attribute_only, 
+       mapping = aes(x = midstory_cover, y = shan_sr, colour = midstory_cover)) + 
+  geom_point() + geom_boxplot() + theme_bw() + 
+  xlab("Midstory Cover (%), broken into 4 categories") +
+  ylab("Shannon-Weiner Index of Biodiversity at wetland sites")
+
+ # boxplot shan div ~ herbaceous cover
+ ggplot(data = wet_attribute_only, 
+       mapping = aes(x = herb_layer, y = shan_sr, colour = herb_layer)) + 
+  geom_point() + geom_boxplot() + theme_bw() + 
+  xlab("Herb Layer, broken into 4 categories") +
+  ylab("Shannon-Weiner Index of Biodiversity at wetland sites")
+
+```
+
+```{r}
+# Working on the LiDAR data to create similar diversity ~ canopy cover models
+
+```
+
