@@ -15,10 +15,11 @@ So this first section I'm taking my raw data, and manipulating it into a communi
 matrix that I can perform some statistics on afterward. 
 
 ```{r}
+
 library(ggplot2)
 library(dplyr)
 library(vegan)
-install.packages("dummies")
+# install.packages("dummies")
 library(dummies)
 dat <- read.csv("~/raw_bird_data.csv")
 
@@ -39,8 +40,6 @@ comm <- ifelse(is.na(comm), 0, comm)
 # Index)
 comm_2 <- as.data.frame(comm)
 comm_2
-shan_comm <- diversity(actual_comm_matrix, index = "shannon")
-shan_comm
 
 comm_one <- colSums(matrix(comm_2, nrow=3))
 dim(comm_2)
@@ -50,13 +49,16 @@ comm_2_actual <- cbind(comm_2_samp, comm_2)
 library(dplyr)
 actual_comm_matrix <- comm_2_actual %>% group_by(comm_2_samp) %>% summarise_all(sum)
 
-df3 <- actual_comm_matrix[,-1]
-rownames(df3) <- c('HH02', 'HH04', 'HH07', 'HH13', 'HH14',
+matrix_summed_by_wetland <- actual_comm_matrix[,-1]
+rownames(matrix_summed_by_wetland) <- c('HH02', 'HH04', 'HH07', 'HH13', 'HH14',
                          'HH17', 'HH22', 'HH33', 'HH34', 'HH48', 
                          'HH49', 'HH50', 'SP01', 'SP02', 'SP03', 
                          'SP05', 'SP07', 'SP08', 'SP09', 'UP01',
                          'UP02', 'UP03', 'UP04', 'UP05', 'UP06')
 
+
+shan_comm <- diversity(matrix_summed_by_wetland, index = "shannon")
+shan_comm
 
 comm_2_samp <- c('HH02','HH02', 'HH02', 'HH04', 'HH04', 'HH04',
                               'HH07', 'HH07', 'HH07', 'HH13', 'HH13', 'HH13',
@@ -72,7 +74,11 @@ comm_2_samp <- c('HH02','HH02', 'HH02', 'HH04', 'HH04', 'HH04',
                          'UP04', 'UP04', 'UP05','UP05', 'UP05',  'UP06', 'UP06',
                          'UP06')
 
-aggregate(. ~ Category, x, sum)
+
+
+```
+```{r}
+dat <- read.csv("~/raw_bird_data.csv")
 
 ```
 
@@ -85,6 +91,10 @@ So I read that file in, and create some models, test for normal distribution.
 
 # once I compute shannon-weiner index, It is easiest to manually plug those numbers
 # in as a column in my wetland attribute Google Sheets table
+
+# quick ANOVA
+
+summary(aov())
 
 # all my wetland attribute data with the Shanon-Weiner Bio Index listed as "shan_sr"
 wet_attribute_only <- read.csv("~/raw_data - just_wet_attribute.csv")
